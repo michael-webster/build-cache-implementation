@@ -18,10 +18,27 @@ jobs:
       - run: |
           docker buildx use mybuilder
           docker buildx build --push --provenance=false -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$CIRCLE_SHA1 --cache-from mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:cache --cache-to mode=max,image-manifest=true,oci-mediatypes=true,type=registry,ref=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:cache .
+  no-cache:
+    machine:
+      image: ubuntu-2004:current
+    steps:
+      - checkout
+      - aws-cli/install
+      - aws-cli/assume-role-with-web-identity:
+          role-arn: arn:aws:iam::269508603282:role/build-cache-ecr-demo
+      - run: aws sts get-caller-identity
+      - run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+      - run: docker buildx create --name mybuilder --use
+      - run: |
+          docker buildx use mybuilder
+          docker buildx build --load --provenance=false -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$CIRCLE_SHA1 .
 
 workflows:
   test-cache:
     jobs:
       - build:
+          context:
+            - buildx-cache
+      - no-cache:
           context:
             - buildx-cache
