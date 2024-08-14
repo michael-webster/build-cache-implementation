@@ -1,0 +1,20 @@
+version: 2.1
+
+jobs:
+  build:
+    machine:
+      image: ubuntu-2004:current
+    steps:
+      - checkout
+      - run: docker buildx create --name mybuilder --use
+      - run: |
+          docker buildx use mybuilder
+          docker buildx build --cache-from type=registry,ref=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:cache --cache-to type=registry,ref=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:cache . 
+      - run:
+          name: Build with Buildkit
+          command: |
+            buildctl build \
+              --frontend=dockerfile.v0 \
+              --local context=. \
+              --local dockerfile=. \
+              --output type=image,name=myimage,push=false
