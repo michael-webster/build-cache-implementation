@@ -16,7 +16,7 @@ jobs:
       - run: docker buildx create --name mybuilder --use
       - run: |
           docker buildx use mybuilder
-          docker buildx build --cache-from type=registry,ref=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:cache --cache-to type=registry,ref=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:cache .
+          docker buildx build --push -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$CIRCLE_SHA1 --cache-from type=registry,ref=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:cache --cache-to type=registry,ref=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:cache .
 
 workflows:
   test-cache:
